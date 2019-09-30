@@ -72,9 +72,6 @@ class FashionConfig(Config):
     # Number of training steps per epoch
     STEPS_PER_EPOCH = 1000
 
-    # Skip detections with < 90% confidence
-    DETECTION_MIN_CONFIDENCE = 0.9
-
 
 ############################################################
 #  Dataset
@@ -137,8 +134,7 @@ class FashionDataset(utils.Dataset):
         return mask, np.array(labels)
 
 
-def train(model):
-    """Train the model."""
+def load_datasets():
     
     # Get fashion labels from json file
     label_json_path = os.path.join(args.dataset, LABELS_JSON_FILENAME)
@@ -168,11 +164,16 @@ def train(model):
     # load validation dataset
     dataset_val = FashionDataset(args.dataset, df_val, label_names)
     dataset_val.prepare()
+    
+    return dataset_train, dataset_val
+    
 
-    # *** This training schedule is an example. Update to your needs ***
-    # Since we're using a very small dataset, and starting from
-    # COCO trained weights, we don't need to train too long. Also,
-    # no need to train all layers, just the heads should do it.
+def train(model):
+    """Train the model."""
+    
+    # load train and valid datasets
+    dataset_train, dataset_val = load_datasets()
+    
     print("Training network heads")
     model.train(dataset_train, dataset_val,
                 learning_rate=config.LEARNING_RATE,
@@ -231,6 +232,7 @@ if __name__ == '__main__':
             # one image at a time. Batch size = GPU_COUNT * IMAGES_PER_GPU
             GPU_COUNT = 1
             IMAGES_PER_GPU = 1
+            #DETECTION_MIN_CONFIDENCE = 0.9 # Skip detections with < 90% confidence
         config = InferenceConfig()
     config.display()
 
