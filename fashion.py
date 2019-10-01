@@ -26,12 +26,9 @@ Usage: import the module (see Jupyter notebooks for examples), or run from
 
 import os
 import sys
-import json
-import datetime
 import numpy as np
 import pandas as pd
 import cv2
-import skimage.draw
 from sklearn.model_selection import train_test_split
 
 # Import Mask RCNN
@@ -39,6 +36,8 @@ MASKRCNN_DIR = os.path.abspath("Mask_RCNN")
 sys.path.append(MASKRCNN_DIR)  
 from mrcnn.config import Config
 from mrcnn import model as modellib, utils
+
+import utils_fashion
 
 # Path to trained weights file
 COCO_WEIGHTS_PATH = os.path.join(MASKRCNN_DIR, "mask_rcnn_coco.h5")
@@ -134,16 +133,13 @@ class FashionDataset(utils.Dataset):
         return mask, np.array(labels)
 
 
-def load_datasets():
+def load_datasets(data_dir, lables_json_filename, annotations_csv_filename):
     
     # Get fashion labels from json file
-    label_json_path = os.path.join(args.dataset, LABELS_JSON_FILENAME)
-    with open(label_json_path) as f:
-        label_descriptions = json.load(f)
-    label_names = [x['name'] for x in label_descriptions['categories']]
+    label_names = utils_fashion.get_labels(data_dir, lables_json_filename)
     
     # read annotations CSV file into a pandas dataframe
-    annotations_csv_path = os.path.join(args.dataset, ANNOTATIONS_CSV_FILENAME)
+    annotations_csv_path = os.path.join(data_dir, annotations_csv_filename)
     segment_df = pd.read_csv(annotations_csv_path)
     
     # discard the segments that contains attributes and only keep the category IDs
@@ -158,11 +154,11 @@ def load_datasets():
     df_train, df_val = train_test_split(image_df, test_size=0.2, random_state=42)
     
     # load training dataset.
-    dataset_train = FashionDataset(args.dataset, df_train, label_names)
+    dataset_train = FashionDataset(data_dir, df_train, label_names)
     dataset_train.prepare()
 
     # load validation dataset
-    dataset_val = FashionDataset(args.dataset, df_val, label_names)
+    dataset_val = FashionDataset(data_dir, df_val, label_names)
     dataset_val.prepare()
     
     return dataset_train, dataset_val
@@ -172,7 +168,9 @@ def train(model):
     """Train the model."""
     
     # load train and valid datasets
-    dataset_train, dataset_val = load_datasets()
+    dataset_train, dataset_val = load_datasets(args.dataset,
+                                                LABELS_JSON_FILENAME,
+                                                ANNOTATIONS_CSV_FILENAME)
     
     print("Training network heads")
     model.train(dataset_train, dataset_val,
