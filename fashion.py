@@ -21,7 +21,7 @@ Usage: import the module (see Jupyter notebooks for examples), or run from
     python3 fashion.py train --dataset=/path/to/fashion/dataset --weights=imagenet
     
     # Detect fashion items in an image
-    python3 fashion.py detect --weights=/path/to/weights/file.h5 --image=<URL or path to file>
+    python3 fashion.py detect --weights=/path/to/weights/file.h5 --images=<path to folder>
 """
 
 import os
@@ -47,8 +47,12 @@ COCO_WEIGHTS_PATH = os.path.join(MASKRCNN_DIR, "mask_rcnn_coco.h5")
 DEFAULT_LOGS_DIR = os.path.join(MASKRCNN_DIR, "logs")
 
 # annotation files
+DATA_DIR = os.path.abspath("data")
 LABELS_JSON_FILENAME = "label_descriptions.json"
 ANNOTATIONS_CSV_FILENAME = "train.csv"
+
+# Detection/Segmentation output directory
+OUT_DIR = os.path.abspath("results")
 
 ############################################################
 #  Configurations
@@ -165,6 +169,7 @@ def load_datasets(data_dir, lables_json_filename, annotations_csv_filename):
     
 
 def train(model):
+
     """Train the model."""
     
     # load train and valid datasets
@@ -177,6 +182,45 @@ def train(model):
                 learning_rate=config.LEARNING_RATE,
                 epochs=1,
                 layers='heads')
+
+
+def detect(model, images_path):
+
+    ''' Perform object detection and segmentation on images'''
+    
+    # Output directory for images with Mask R-CNN annotations trained on fashion
+    if not os.path.exists(OUT_DIR):
+        os.mkdir(OUT_DIR)
+    
+    # Load images file names from the images folder
+    file_names = next(os.walk(images_path))[2]
+    
+    # Get fashion labels from json file
+    CLASS_NAMES = utils_fashion.get_labels(DATA_DIR, LABELS_JSON_FILENAME)
+    CLASS_NAMES.insert(0, 'BG')
+
+    # generate mask and bbox colors to annotate each label
+    COLORS = utils_fashion.get_labels_colors(CLASS_NAMES)
+
+    # loop through images
+    for i, file_name in enumerate(file_names):
+        
+        # read image with opencv and convert to RGB for Mask R-CNN input
+        image_brg = cv2.imread(os.path.join(images_path, file_name))
+        image = cv2.cvtColor(image_brg, cv2.COLOR_BGR2RGB)
+        
+        # Run Mask R-CNN detection/segmentation
+        results = model.detect([image])[0]
+        
+        # apply mask to each object in the image
+        image = utils_fashion.apply_masks_on_image(image, results, COLORS)
+            
+        # draw bounding boxes, class labels, and score of each detection on the image
+        image = utils_fashion.draw_bbox_and_labels_on_image(image, results, COLORS, CLASS_NAMES)
+        
+        # save output
+        cv2.imwrite(os.path.join(OUT_DIR, file_name), image)
+        print('{}/{}: {}'.format(i+1, len(file_names), file_name))
 
 
 ############################################################
@@ -202,20 +246,16 @@ if __name__ == '__main__':
                         default=DEFAULT_LOGS_DIR,
                         metavar="/path/to/logs/",
                         help='Logs and checkpoints directory (default=logs/)')
-    parser.add_argument('--image', required=False,
-                        metavar="path or URL to image",
-                        help='Image to detect fashion items on')
-    parser.add_argument('--video', required=False,
-                        metavar="path or URL to video",
-                        help='Video to detect fashion items on')
+    parser.add_argument('--images', required=False,
+                        metavar="path to images folder",
+                        help='Images to detect fashion items on')
     args = parser.parse_args()
 
     # Validate arguments
     if args.command == "train":
         assert args.dataset, "Argument --dataset is required for training"
     elif args.command == "detect":
-        assert args.image or args.video,\
-               "Provide --image or --video to detect fashion items"
+        assert args.images, "Provide --images to detect fashion items"
 
     print("Weights: ", args.weights)
     print("Dataset: ", args.dataset)
@@ -272,7 +312,7 @@ if __name__ == '__main__':
     if args.command == "train":
         train(model)
     elif args.command == "detect":
-        detect(model, image_path=args.image, video_path=args.video)
+        detect(model, images_path=args.images)
     else:
         print("'{}' is not recognized. "
               "Use 'train' or 'detect'".format(args.command))
