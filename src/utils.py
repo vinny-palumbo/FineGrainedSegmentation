@@ -6,6 +6,11 @@ import random
 import numpy as np
 
 from Mask_RCNN.mrcnn import visualize
+from Mask_RCNN.mrcnn import model as modellib, utils
+
+# Path to trained weights file
+FILE_DIR = os.path.dirname(os.path.realpath(__file__))
+COCO_WEIGHTS_PATH = os.path.join(FILE_DIR, "Mask_RCNN/mask_rcnn_coco.h5")
 
 
 def get_labels(dataset, json_file):
@@ -82,3 +87,35 @@ def draw_bbox_and_labels_on_image(image, r, colors, class_names):
             font_size, color, thickness_size)
         
     return image
+    
+    
+def load_weights(model, weights):
+
+    ''' Load coco, imagenet, last or custom weights on the model'''
+
+    # Select weights file to load
+    if weights.lower() == "coco":
+        weights_path = COCO_WEIGHTS_PATH
+        # Download weights file
+        if not os.path.exists(weights_path):
+            utils.download_trained_weights(weights_path)
+    elif weights.lower() == "last":
+        # Find last trained weights
+        weights_path = model.find_last()
+    elif weights.lower() == "imagenet":
+        # Start from ImageNet trained weights
+        weights_path = model.get_imagenet_weights()
+    else:
+        weights_path = weights
+
+    # Load weights
+    print("Loading weights ", weights_path)
+    if weights.lower() == "coco":
+        # Exclude the last layers because they require a matching
+        # number of classes
+        model.load_weights(weights_path, by_name=True, exclude=[
+            "mrcnn_class_logits", "mrcnn_bbox_fc",
+            "mrcnn_bbox", "mrcnn_mask"])
+    else:
+        model.load_weights(weights_path, by_name=True)
+        
