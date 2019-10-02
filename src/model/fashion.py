@@ -31,20 +31,23 @@ import pandas as pd
 import cv2
 from sklearn.model_selection import train_test_split
 
-# Import Mask RCNN
-MASKRCNN_DIR = os.path.abspath("Mask_RCNN")
-sys.path.append(MASKRCNN_DIR)  
-from mrcnn.config import Config
-from mrcnn import model as modellib, utils
+# get this file's directory
+FILE_DIR = os.path.dirname(os.path.realpath(__file__))
+SRC_DIR = os.path.join(FILE_DIR, "..")
+sys.path.append(SRC_DIR)
+from utils import get_labels, get_labels_colors, apply_masks_on_image, draw_bbox_and_labels_on_image
 
-import utils_fashion
+# Import Mask RCNN
+from Mask_RCNN.mrcnn.config import Config
+from Mask_RCNN.mrcnn import model as modellib, utils
 
 # Path to trained weights file
+MASKRCNN_DIR = os.path.join(SRC_DIR, "Mask_RCNN")
 COCO_WEIGHTS_PATH = os.path.join(MASKRCNN_DIR, "mask_rcnn_coco.h5")
 
 # Directory to save logs and model checkpoints, if not provided
 # through the command line argument --models
-DEFAULT_MODELS_DIR = os.path.join(MASKRCNN_DIR, "../models")
+DEFAULT_MODELS_DIR = os.path.join(SRC_DIR, "../models")
 
 # annotation files
 DATA_DIR = os.path.abspath("data")
@@ -140,7 +143,7 @@ class FashionDataset(utils.Dataset):
 def load_datasets(data_dir, lables_json_filename, annotations_csv_filename):
     
     # Get fashion labels from json file
-    label_names = utils_fashion.get_labels(data_dir, lables_json_filename)
+    label_names = get_labels(data_dir, lables_json_filename)
     
     # read annotations CSV file into a pandas dataframe
     annotations_csv_path = os.path.join(data_dir, annotations_csv_filename)
@@ -196,11 +199,11 @@ def detect(model, images_path):
     file_names = next(os.walk(images_path))[2]
     
     # Get fashion labels from json file
-    CLASS_NAMES = utils_fashion.get_labels(DATA_DIR, LABELS_JSON_FILENAME)
+    CLASS_NAMES = get_labels(DATA_DIR, LABELS_JSON_FILENAME)
     CLASS_NAMES.insert(0, 'BG')
 
     # generate mask and bbox colors to annotate each label
-    COLORS = utils_fashion.get_labels_colors(CLASS_NAMES)
+    COLORS = get_labels_colors(CLASS_NAMES)
 
     # loop through images
     for i, file_name in enumerate(file_names):
@@ -213,10 +216,10 @@ def detect(model, images_path):
         results = model.detect([image])[0]
         
         # apply mask to each object in the image
-        image = utils_fashion.apply_masks_on_image(image, results, COLORS)
+        image = apply_masks_on_image(image, results, COLORS)
             
         # draw bounding boxes, class labels, and score of each detection on the image
-        image = utils_fashion.draw_bbox_and_labels_on_image(image, results, COLORS, CLASS_NAMES)
+        image = draw_bbox_and_labels_on_image(image, results, COLORS, CLASS_NAMES)
         
         # save output
         cv2.imwrite(os.path.join(OUT_DIR, file_name), image)
