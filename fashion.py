@@ -43,8 +43,8 @@ import utils_fashion
 COCO_WEIGHTS_PATH = os.path.join(MASKRCNN_DIR, "mask_rcnn_coco.h5")
 
 # Directory to save logs and model checkpoints, if not provided
-# through the command line argument --logs
-DEFAULT_LOGS_DIR = os.path.join(MASKRCNN_DIR, "logs")
+# through the command line argument --models
+DEFAULT_MODELS_DIR = os.path.join(MASKRCNN_DIR, "../models")
 
 # annotation files
 DATA_DIR = os.path.abspath("data")
@@ -242,10 +242,10 @@ if __name__ == '__main__':
     parser.add_argument('--weights', required=True,
                         metavar="/path/to/weights.h5",
                         help="Path to weights .h5 file or 'coco'")
-    parser.add_argument('--logs', required=False,
-                        default=DEFAULT_LOGS_DIR,
-                        metavar="/path/to/logs/",
-                        help='Logs and checkpoints directory (default=logs/)')
+    parser.add_argument('--models', required=False,
+                        default=DEFAULT_MODELS_DIR,
+                        metavar="/path/to/models/",
+                        help='Logs and checkpoints directory (default=models/)')
     parser.add_argument('--images', required=False,
                         metavar="path to images folder",
                         help='Images to detect fashion items on')
@@ -259,7 +259,7 @@ if __name__ == '__main__':
 
     print("Weights: ", args.weights)
     print("Dataset: ", args.dataset)
-    print("Logs: ", args.logs)
+    print("Models: ", args.models)
 
     # Configurations
     if args.command == "train":
@@ -277,10 +277,10 @@ if __name__ == '__main__':
     # Create model
     if args.command == "train":
         model = modellib.MaskRCNN(mode="training", config=config,
-                                  model_dir=args.logs)
+                                  model_dir=args.models)
     else:
         model = modellib.MaskRCNN(mode="inference", config=config,
-                                  model_dir=args.logs)
+                                  model_dir=args.models)
 
     # Select weights file to load
     if args.weights.lower() == "coco":
