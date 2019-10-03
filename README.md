@@ -22,9 +22,9 @@ Python 3.5, TensorFlow 1.3, Keras 2.0.8 and other common packages listed in `req
    ```
 3. Run setup in the Mask_RCNN directory
     ```bash
-    python3 Mask_RCNN/setup.py install
+    python3 src/Mask_RCNN/setup.py install
     ``` 
-4. (Optional) Download pre-trained COCO weights (mask_rcnn_coco.h5) from the Matterport Mask_RCNN [releases page](https://github.com/matterport/Mask_RCNN/releases) and place it in the Mask_RCNN root folder
+4. (Optional) Download pre-trained COCO weights (mask_rcnn_coco.h5) from the Matterport Mask_RCNN [releases page](https://github.com/matterport/Mask_RCNN/releases) and place it in the src/Mask_RCNN folder
 
 ## Getting Started
 
@@ -34,7 +34,11 @@ Python 3.5, TensorFlow 1.3, Keras 2.0.8 and other common packages listed in `req
 
 * [inspect_model.ipynb](notebooks/inspect_model.ipynb) goes in depth into the steps performed to detect and segment objects. It provides visualizations of every step of the pipeline.
 
-* ([model.py](Mask_RCNN/mrcnn/model.py), [utils.py](Mask_RCNN/mrcnn/utils.py), [config.py](Mask_RCNN/mrcnn/config.py)): These files contain the main Mask RCNN implementation. 
+* [train.py](src/model/train.py) trains a model to detect and segment fashion items, given a dataset and pre-trained weights
+
+* [detect.py](src/model/detect.py) detects and segments fashion items in images, given a folder of images and pre-trained weights
+
+* ([model.py](src/Mask_RCNN/mrcnn/model.py), [utils.py](src/Mask_RCNN/mrcnn/utils.py), [config.py](src/Mask_RCNN/mrcnn/config.py)): These files contain the main Mask RCNN implementation. 
 
 
 
