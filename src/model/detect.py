@@ -1,10 +1,11 @@
 """
 Mask R-CNN
-Configurations and data loading code for Fashion dataset.
+Configurations and inference code for Fashion dataset.
 
 Copyright (c) 2018 Matterport, Inc.
 Licensed under the MIT License (see LICENSE for details)
 Written by Waleed Abdulla
+Modified by Vincent Palumbo
 
 ------------------------------------------------------------
 
@@ -19,7 +20,7 @@ import os
 import sys
 import cv2
 
-# get this file's directory
+# get this file's directory and add src/ to sys.path
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 SRC_DIR = os.path.join(FILE_DIR, "..")
 sys.path.append(SRC_DIR)
@@ -33,7 +34,7 @@ from Mask_RCNN.mrcnn import model as modellib, utils
 # through the command line argument --models
 DEFAULT_MODELS_DIR = os.path.join(SRC_DIR, "../models")
 
-# annotation files
+# necessary annotation files in the data
 DATA_DIR = os.path.abspath("data")
 LABELS_JSON_FILENAME = "label_descriptions.json"
 
@@ -45,9 +46,11 @@ OUT_DIR = os.path.abspath("results")
 ############################################################
 
 class InferenceConfig(Config):
-    """Configuration for training on the toy  dataset.
+
+    '''Configuration for inference on the fashion dataset.
     Derives from the base Config class and overrides some values.
-    """
+    '''
+
     # Give the configuration a recognizable name
     NAME = "fashion"
     
@@ -107,13 +110,13 @@ if __name__ == '__main__':
 
     # Parse command line arguments
     parser = argparse.ArgumentParser(
-        description='Detect and segment fashion items.')
+        description='Detect and segment fashion items in images.')
     parser.add_argument('--images', required=True,
                         metavar="path to images folder",
                         help='Images to detect fashion items on')
     parser.add_argument('--weights', required=True,
                         metavar="/path/to/weights.h5",
-                        help="Path to weights .h5 file or 'coco'")
+                        help="Path to weights .h5 file or 'coco', 'imagenet', or 'last'")
     parser.add_argument('--models', required=False,
                         default=DEFAULT_MODELS_DIR,
                         metavar="/path/to/models/",

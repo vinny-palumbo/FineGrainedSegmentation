@@ -1,10 +1,11 @@
 """
 Mask R-CNN
-Configurations and data loading code for Fashion dataset.
+Configurations, data loading, and training code for Fashion dataset.
 
 Copyright (c) 2018 Matterport, Inc.
 Licensed under the MIT License (see LICENSE for details)
 Written by Waleed Abdulla
+Modified by Vincent Palumbo
 
 ------------------------------------------------------------
 
@@ -14,11 +15,14 @@ Usage: import the module (see Jupyter notebooks for examples), or run from
     # Train a new model starting from pre-trained COCO weights
     python3 train.py --dataset=/path/to/fashion/dataset --weights=coco
 
-    # Resume training a model that you had trained earlier
-    python3 train.py --dataset=/path/to/fashion/dataset --weights=last
-
     # Train a new model starting from ImageNet weights
     python3 train.py --dataset=/path/to/fashion/dataset --weights=imagenet
+    
+    # Resume training on the last model that you had trained on
+    python3 train.py --dataset=/path/to/fashion/dataset --weights=last
+    
+    # Resume training on a previous model that you had trained on 
+    python3 train.py --dataset=/path/to/fashion/dataset --weights=/path/to/weights.h5
     
 """
 
@@ -28,7 +32,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-# get this file's directory
+# get this file's directory and add src/ to sys.path
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 SRC_DIR = os.path.join(FILE_DIR, "..")
 sys.path.append(SRC_DIR)
@@ -42,7 +46,7 @@ from Mask_RCNN.mrcnn import model as modellib, utils
 # through the command line argument --models
 DEFAULT_MODELS_DIR = os.path.join(SRC_DIR, "../models")
 
-# annotation files
+# necessary annotation files in the data
 DATA_DIR = os.path.abspath("data")
 LABELS_JSON_FILENAME = "label_descriptions.json"
 ANNOTATIONS_CSV_FILENAME = "train.csv"
@@ -53,9 +57,11 @@ ANNOTATIONS_CSV_FILENAME = "train.csv"
 ############################################################
 
 class FashionConfig(Config):
-    """Configuration for training on the toy  dataset.
+
+    '''Configuration for training on the fashion dataset.
     Derives from the base Config class and overrides some values.
-    """
+    '''
+    
     # Give the configuration a recognizable name
     NAME = "fashion"
 
@@ -94,13 +100,18 @@ class FashionDataset(utils.Dataset):
                            annotations=row['EncodedPixels'], 
                            height=row['Height'], width=row['Width'])
     
+    
     def image_reference(self, image_id):
+    
         ''' Returns the image path and its labels for debugging purposes'''
+        
         info = self.image_info[image_id]
         return info['path'], [self.label_names[int(x)] for x in info['labels']]
     
+    
     def load_mask(self, image_id):
-        """Load instance masks for the given image.
+    
+        ''' Load instance masks for the given image.
 
         Different datasets use different ways to store masks. This
         function converts the different mask format to one format
@@ -110,7 +121,8 @@ class FashionDataset(utils.Dataset):
         masks: A bool array of shape [height, width, instance count] with
             one mask per instance.
         class_ids: a 1D array of class IDs of the instance masks.
-        """
+        '''
+        
         info = self.image_info[image_id]
                 
         mask = np.zeros((info["height"], info["width"], len(info['annotations'])), dtype=np.uint8)
@@ -132,6 +144,8 @@ class FashionDataset(utils.Dataset):
 
 
 def load_datasets(data_dir, lables_json_filename, annotations_csv_filename):
+    
+    ''' Load training and validation datasets '''
     
     # Get fashion labels from json file
     label_names = get_labels(data_dir, lables_json_filename)
@@ -193,7 +207,7 @@ if __name__ == '__main__':
                         help='Directory of the Fashion dataset')
     parser.add_argument('--weights', required=True,
                         metavar="/path/to/weights.h5",
-                        help="Path to weights .h5 file or 'coco'")
+                        help="Path to weights .h5 file or 'coco', 'imagenet', or 'last'")
     parser.add_argument('--models', required=False,
                         default=DEFAULT_MODELS_DIR,
                         metavar="/path/to/models/",
