@@ -22,7 +22,8 @@ Python 3.5, TensorFlow 1.3, Keras 2.0.8 and other common packages listed in `req
    ```
 3. Run setup in the Mask_RCNN directory
     ```bash
-    python3 src/Mask_RCNN/setup.py install
+    cd src/Mask_RCNN
+	python3 setup.py install
     ``` 
 4. (Optional) Download pre-trained COCO weights (mask_rcnn_coco.h5) from the Matterport Mask_RCNN [releases page](https://github.com/matterport/Mask_RCNN/releases) and place it in the src/Mask_RCNN folder
 
