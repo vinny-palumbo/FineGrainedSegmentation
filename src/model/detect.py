@@ -116,7 +116,7 @@ if __name__ == '__main__':
                         help='Images to detect fashion items on')
     parser.add_argument('--weights', required=True,
                         metavar="/path/to/weights.h5",
-                        help="Path to weights .h5 file or 'coco', 'imagenet', or 'last'")
+                        help="Path to weights .h5 file")
     parser.add_argument('--models', required=False,
                         default=DEFAULT_MODELS_DIR,
                         metavar="/path/to/models/",
@@ -139,7 +139,7 @@ if __name__ == '__main__':
     model = modellib.MaskRCNN(mode="inference", config=config, model_dir=args.models)
     
     # Load weights
-    utils_fashion.load_weights(model, args.weights)
+    model.load_weights(args.weights, by_name=True)
 
     # detect and segment objects in images
     detect(model, images_path=args.images)
